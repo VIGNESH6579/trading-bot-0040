@@ -18,6 +18,7 @@ public class ApiController {
     @Autowired private AngelOneService     angelService;
     @Autowired private AngelOneWebSocketV2 wsV2;
     @Autowired private BroadcastService    broadcaster;
+    @Autowired private com.ocsentinel.service.AiService aiService;
 
     // ── HEALTH ────────────────────────────────────────────────────────────────
     @GetMapping("/health")
@@ -110,5 +111,18 @@ public class ApiController {
             "name",      s.getName() != null ? s.getName() : "",
             "wsRunning", wsV2.isRunning()
         ));
+    }
+
+    // ── AI ANALYSIS ───────────────────────────────────────────────────────────
+    @PostMapping("/analyze")
+    public ResponseEntity<com.ocsentinel.model.AnalysisResult> analyze() {
+        OCUpdate oc = wsV2.getLatestOC();
+        if (oc == null) {
+            com.ocsentinel.model.AnalysisResult err = new com.ocsentinel.model.AnalysisResult();
+            err.setVerdict("WAITING");
+            err.setReasoning("Waiting for live data feed...");
+            return ResponseEntity.ok(err);
+        }
+        return ResponseEntity.ok(aiService.analyze(oc));
     }
 }
