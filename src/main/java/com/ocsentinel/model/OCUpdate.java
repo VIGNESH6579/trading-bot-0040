@@ -18,6 +18,8 @@ public class OCUpdate {
     private List<StrikeRow> strikes;
     private long   timestamp;
     private String dataSource;     // "WEBSOCKET_V2" or "REST"
+    private String trend;          // "BULLISH", "BEARISH", "NEUTRAL"
+    private String trendReasoning;
 
     @Data
     public static class StrikeRow {
@@ -28,6 +30,7 @@ public class OCUpdate {
 
     @Data
     public static class OIData {
+        private String token;      // Angel One symbol token
         private long   oi;
         private long   changeOI;
         private long   volume;

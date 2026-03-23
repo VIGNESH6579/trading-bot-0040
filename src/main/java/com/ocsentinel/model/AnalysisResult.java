@@ -9,7 +9,8 @@ public class AnalysisResult {
     private double stopLoss;
     private double target;
     private String reasoning;
-    private long   timestamp;
+    private long   dataTimestamp; // Timestamp of the OC data used
+    private long   timestamp;     // Signal generation timestamp
 
     public AnalysisResult() {
         this.timestamp = System.currentTimeMillis();

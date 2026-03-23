@@ -57,7 +57,9 @@ public class AiService {
 
                 JsonNode j = mapper.readTree(res.body().string());
                 String content = j.path("content").get(0).path("text").asText();
-                return parseAiResponse(content);
+                AnalysisResult result = parseAiResponse(content);
+                result.setDataTimestamp(data.getTimestamp());
+                return result;
             }
         } catch (Exception e) {
             log.error("Analysis error: {}", e.getMessage());
@@ -71,8 +73,9 @@ public class AiService {
     private String buildPrompt(OCUpdate d) {
         return String.format(
             "You are an expert options trader for the Indian Stock Market. " +
-            "Analyze the following Option Chain data for %s (Expiry: %s):\n" +
+            "Analyze the following real-time data for %s (Expiry: %s):\n" +
             "- Spot Price: %.2f\n" +
+            "- Trend: %s (%s)\n" +
             "- PCR: %.2f\n" +
             "- Max Pain: %.2f\n" +
             "- Resistance (CE Wall): %.2f\n" +
@@ -80,13 +83,18 @@ public class AiService {
             "- ATM IV: %.2f\n" +
             "- Total CE OI: %d\n" +
             "- Total PE OI: %d\n\n" +
-            "Based on this data, provide a clear trade verdict: BUY CE, BUY PE, or NO TRADE. " +
+            "Guidelines:\n" +
+            "1. IF price is near PE wall + bullish trend -> consider BUY CE.\n" +
+            "2. IF price is near CE wall + bearish trend -> consider BUY PE.\n" +
+            "3. Watch for liquidity traps (false OI signals) and IV spikes.\n\n" +
+            "Provide a clear trade verdict: BUY CE, BUY PE, or NO TRADE. " +
             "Include an Entry Price, Stop Loss, and Target if you recommend a trade. " +
-            "Explain your reasoning in 2-3 concise sentences.\n" +
+            "Explain your reasoning in 2-3 concise sentences, including timing awareness.\n" +
             "Respond ONLY in JSON format like this: " +
             "{\"verdict\": \"BUY CE\", \"entry\": 150.5, \"stopLoss\": 120.0, \"target\": 210.0, \"reasoning\": \"...\"}",
-            d.getInstrument(), d.getExpiry(), d.getSpot(), d.getPcr(), d.getMaxPain(),
-            d.getMaxCEStrike(), d.getMaxPEStrike(), d.getAtmIV(), d.getTotalCEOI(), d.getTotalPEOI()
+            d.getInstrument(), d.getExpiry(), d.getSpot(), d.getTrend(), d.getTrendReasoning(),
+            d.getPcr(), d.getMaxPain(), d.getMaxCEStrike(), d.getMaxPEStrike(), d.getAtmIV(),
+            d.getTotalCEOI(), d.getTotalPEOI()
         );
     }
 
