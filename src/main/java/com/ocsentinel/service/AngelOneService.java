@@ -128,6 +128,7 @@ public class AngelOneService {
             });
 
             OCUpdate.OIData d = new OCUpdate.OIData();
+            d.setToken(item.path("symbolToken").asText());
             d.setOi((long) item.path("openInterest").asDouble());
             d.setChangeOI((long) item.path("changeinOpenInterest").asDouble());
             d.setVolume((long) item.path("tradedVolume").asDouble(
@@ -180,6 +181,17 @@ public class AngelOneService {
         OCUpdate.StrikeRow maxPE = strikes.stream()
             .max(Comparator.comparingLong(s -> s.getPe().getOi())).orElse(atm);
 
+        // Trend logic
+        String trend = "NEUTRAL";
+        String tr = "Market is in balance.";
+        if (pcr > 1.25 && spot > maxPE.getStrike()) {
+            trend = "BULLISH";
+            tr = "Strong PE support + High PCR.";
+        } else if (pcr < 0.75 && spot < maxCE.getStrike()) {
+            trend = "BEARISH";
+            tr = "Strong CE resistance + Low PCR.";
+        }
+
         OCUpdate oc = new OCUpdate();
         oc.setInstrument(instrument);
         oc.setExpiry(expiry);
@@ -192,6 +204,8 @@ public class AngelOneService {
         oc.setTotalCEOI(tce);
         oc.setTotalPEOI(tpe);
         oc.setStrikes(strikes);
+        oc.setTrend(trend);
+        oc.setTrendReasoning(tr);
         oc.setTimestamp(System.currentTimeMillis());
         oc.setDataSource(source);
         return oc;

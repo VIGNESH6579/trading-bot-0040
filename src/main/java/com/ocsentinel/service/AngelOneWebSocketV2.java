@@ -318,9 +318,17 @@ public class AngelOneWebSocketV2 {
                 latestOC = oc;
                 broadcaster.ocUpdate(oc);
                 log.info("Initial OC loaded: {} strikes", oc.getStrikes().size());
-                // Note: In a full implementation, extract token numbers from the
-                // Angel One instrument master CSV and populate tokenMap
-                // For now we rely on REST + index spot from V2
+
+                // Populate tokenMap from REST OC
+                for (OCUpdate.StrikeRow row : oc.getStrikes()) {
+                    if (row.getCe() != null && row.getCe().getToken() != null) {
+                        tokenMap.put(row.getCe().getToken(), new StrikeInfo(row.getStrike(), "CE"));
+                    }
+                    if (row.getPe() != null && row.getPe().getToken() != null) {
+                        tokenMap.put(row.getPe().getToken(), new StrikeInfo(row.getStrike(), "PE"));
+                    }
+                }
+                log.info("Token map built: {} tokens", tokenMap.size());
             }
         } catch (Exception e) {
             log.error("Initial OC load: {}", e.getMessage());
